@@ -20,5 +20,8 @@ class DatabaseSeeder extends Seeder
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',
         // ]);
+        $this->call(CardSeeder::class);
+        $this->call(ChallengeSeeder::class);
+        $this->call(QuestionSeeder::class);
     }
 }
