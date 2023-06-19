@@ -1,0 +1,85 @@
+version: '3.9'
+services:
+    #PHP Service
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: malsanyang.com/php8.1
+        container_name: app
+        restart: unless-stopped
+        tty: true
+        environment:
+            SERVICE_NAME: app
+            SERVICE_TAGS: dev
+        working_dir: /var/www/html
+        volumes:
+            - ./:/var/www/html
+        networks:
+            - app-network
+
+    #Nginx Service
+    webserver:
+        image: nginx:alpine
+        container_name: webserver
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "8001:80"
+            - "4431:443"
+        volumes:
+            - ./:/var/www/html
+            - ./nginx/conf.d/:/etc/nginx/conf.d/
+        depends_on:
+            - app
+            - db
+            - redis
+        networks:
+            - app-network
+
+    #MySQL Service
+    db:
+        image: mariadb:10.7.8
+        container_name: db
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "33065:3306"
+        environment:
+            MYSQL_DATABASE: dev-db
+            MYSQL_ROOT_PASSWORD: Admin@123
+            MYSQL_USER: admin
+            MYSQL_PASSWORD: Admin@123
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        volumes:
+            - dbdata:/var/lib/mysql/
+        networks:
+            - app-network
+
+    #Redis Service
+    redis:
+        image: redis:alpine
+        container_name: redis
+        restart: unless-stopped
+        tty: true
+        volumes:
+            - redisData:/data
+        networks:
+            - app-network
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            timeout: 5s
+            retries: 3
+
+#Docker Networks
+networks:
+    app-network:
+        driver: bridge
+
+#Volumes
+volumes:
+    dbdata:
+        driver: local
+    redisData:
+        driver: local
